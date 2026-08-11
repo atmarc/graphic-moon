@@ -116,7 +116,7 @@ export function createSimulationRenderer({
     if ((state.pointCount - 1) % 2 !== 0) {
       retainedPoints.push(renderedPoint(offset, state.pointCount - 1));
     }
-    const lastPoint = retainedPoints.at(-1);
+    const lastPoint = retainedPoints[retainedPoints.length - 1];
     for (let segment = 0; segment < segmentsPerHop; segment++) {
       const start = retainedPoints[Math.min(segment, retainedPoints.length - 1)] ?? lastPoint;
       const end = retainedPoints[Math.min(segment + 1, retainedPoints.length - 1)] ?? lastPoint;

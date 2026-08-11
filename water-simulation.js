@@ -186,8 +186,17 @@ async function decodeImageBlob(blob) {
   const url = URL.createObjectURL(blob);
   try {
     const image = new Image();
+    image.decoding = 'async';
+    const loadPromise = typeof image.decode === 'function' ? null : new Promise((resolve, reject) => {
+      image.addEventListener('load', resolve, { once: true });
+      image.addEventListener('error', () => reject(new Error('The topography image could not be decoded.')), { once: true });
+    });
     image.src = url;
-    await image.decode();
+    if (typeof image.decode === 'function') {
+      await image.decode();
+    } else {
+      await loadPromise;
+    }
     return image;
   } finally {
     URL.revokeObjectURL(url);
@@ -203,15 +212,22 @@ export async function loadLunarTopography(url = './assets/ldem_16_8bit.webp') {
   const canvas = typeof OffscreenCanvas === 'function'
     ? new OffscreenCanvas(width, height)
     : Object.assign(document.createElement('canvas'), { width, height });
-  const context = canvas.getContext('2d', { willReadFrequently: true });
-  context.drawImage(image, 0, 0);
-  const rgba = context.getImageData(0, 0, width, height).data;
-  const pixels = new Uint8Array(width * height);
-  for (let source = 0, target = 0; target < pixels.length; source += 4, target++) {
-    pixels[target] = rgba[source];
+  const context = canvas.getContext('2d', { willReadFrequently: true }) || canvas.getContext('2d');
+  if (!context) {
+    image.close?.();
+    throw new Error('A 2D canvas is required to read lunar topography.');
   }
-  image.close?.();
-  return createTopographyField({ width, height, pixels });
+  try {
+    context.drawImage(image, 0, 0);
+    const rgba = context.getImageData(0, 0, width, height).data;
+    const pixels = new Uint8Array(width * height);
+    for (let source = 0, target = 0; target < pixels.length; source += 4, target++) {
+      pixels[target] = rgba[source];
+    }
+    return createTopographyField({ width, height, pixels });
+  } finally {
+    image.close?.();
+  }
 }
 
 // Inverse CDF of Schorghofer (2023), Equation 15.

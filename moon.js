@@ -230,13 +230,26 @@ function createSurfaceMaterial(colorMap, elevationMap, thermalUniforms, sunDirec
   });
 }
 
-export function createMoon({ renderer, thermalUniforms, onMeshReady, onMeshError, onTextureReady }) {
+export function createMoon({
+  renderer,
+  thermalUniforms,
+  onMeshReady,
+  onMeshError,
+  onTextureReady,
+  onTextureError
+}) {
   const textureLoader = new THREE.TextureLoader();
+  const loadTexture = (url) => textureLoader.load(
+    url,
+    onTextureReady,
+    undefined,
+    (error) => onTextureError?.(url, error)
+  );
   const colorMap = configureTexture(
-    textureLoader.load('./assets/lroc_color_8k_runtime.webp', onTextureReady), renderer, THREE.SRGBColorSpace
+    loadTexture('./assets/lroc_color_8k_runtime.webp'), renderer, THREE.SRGBColorSpace
   );
   const elevationMap = configureTexture(
-    textureLoader.load('./assets/ldem_16_8bit.webp', onTextureReady), renderer, THREE.NoColorSpace
+    loadTexture('./assets/ldem_16_8bit.webp'), renderer, THREE.NoColorSpace
   );
   const sunDirection = { value: new THREE.Vector3(1, 0, 0) };
   const surfaceMaterial = createSurfaceMaterial(colorMap, elevationMap, thermalUniforms, sunDirection);
@@ -248,19 +261,26 @@ export function createMoon({ renderer, thermalUniforms, onMeshReady, onMeshError
   const previewMesh = new THREE.Mesh(createPatchGeometry(previewPatch), surfaceMaterial);
   body.add(previewMesh);
 
-  const worker = new Worker(new URL('./icosphere-worker.js', import.meta.url), { type: 'module' });
-  worker.addEventListener('message', (event) => {
-    const { patch, statistics } = event.data;
-    const mesh = new THREE.Mesh(createPatchGeometry(patch), surfaceMaterial);
-    body.add(mesh);
-    previewMesh.visible = false;
-    onMeshReady?.(statistics);
-    worker.terminate();
-  });
-  worker.addEventListener('error', (error) => {
+  let worker;
+  try {
+    worker = new Worker(new URL('./icosphere-worker.js', import.meta.url), { type: 'module' });
+    worker.addEventListener('message', (event) => {
+      const { patch, statistics } = event.data;
+      const mesh = new THREE.Mesh(createPatchGeometry(patch), surfaceMaterial);
+      body.add(mesh);
+      previewMesh.visible = false;
+      onMeshReady?.(statistics);
+      worker.terminate();
+    });
+    worker.addEventListener('error', (error) => {
+      onMeshError?.(error);
+      worker.terminate();
+    });
+    worker.postMessage({ level: 9 });
+  } catch (error) {
     onMeshError?.(error);
-    worker.terminate();
-  });
+    worker?.terminate();
+  }
 
   function setSubsolarLongitude(longitudeDegrees) {
     const longitude = THREE.MathUtils.degToRad(longitudeDegrees);

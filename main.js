@@ -74,6 +74,10 @@ function createStars() {
 }
 
 const staticTab = document.querySelector('#static-tab');
+const controlsPanel = document.querySelector('#controls-panel');
+const controlsPanelContent = document.querySelector('#controls-panel-content');
+const controlsCollapseButton = document.querySelector('#controls-collapse');
+const startupError = document.querySelector('#startup-error');
 const simulationTab = document.querySelector('#simulation-tab');
 const staticPanel = document.querySelector('#static-panel');
 const simulationPanel = document.querySelector('#simulation-panel');
@@ -101,6 +105,31 @@ const flightCount = document.querySelector('#flight-count');
 const escapedCount = document.querySelector('#escaped-count');
 const hopCount = document.querySelector('#hop-count');
 
+function showVisualizationError(message, reason = 'runtime') {
+  startupError.dataset.reason = reason;
+  startupError.textContent = message;
+  startupError.hidden = false;
+}
+
+function clearVisualizationError(reason) {
+  if (startupError.dataset.reason !== reason) return;
+  startupError.hidden = true;
+  delete startupError.dataset.reason;
+}
+
+function setControlsCollapsed(collapsed) {
+  controlsPanel.classList.toggle('collapsed', collapsed);
+  controlsPanelContent.hidden = collapsed;
+  controlsCollapseButton.setAttribute('aria-expanded', String(!collapsed));
+  controlsCollapseButton.setAttribute('aria-label', collapsed ? 'Expand controls' : 'Collapse controls');
+}
+
+controlsCollapseButton.addEventListener('click', () => {
+  setControlsCollapsed(controlsCollapseButton.getAttribute('aria-expanded') === 'true');
+});
+
+setControlsCollapsed(matchMedia('(max-width: 680px)').matches);
+
 const diviner = createDivinerController();
 const moon = createMoon({
   renderer,
@@ -109,11 +138,15 @@ const moon = createMoon({
   onMeshError(error) {
     console.error('Icosphere worker failed.', error);
   },
-  onTextureReady: requestRender
+  onTextureReady: requestRender,
+  onTextureError(url, error) {
+    console.error(`Lunar texture failed to load from ${url}.`, error);
+    showVisualizationError('A lunar surface texture could not be loaded. Check your network connection and reload the page.', 'texture');
+  }
 });
 scene.add(createStars(), moon.body);
 
-let activeTab = 'static';
+let activeTab = 'simulation';
 let staticTimeHours = 12;
 let waterSimulation = null;
 let simulationDisplay = null;
@@ -270,6 +303,7 @@ divinerReady.then((metadata) => {
   legendMinimum.textContent = `${Math.floor(metadata.minimumKelvin)} K`;
   legendMaximum.textContent = `${Math.ceil(metadata.maximumKelvin)} K`;
   staticLocalTimeInput.disabled = false;
+  snapshotStatus.removeAttribute('role');
   updateStaticTime(staticTimeHours);
 }).catch((error) => {
   console.error('Diviner data failed to load.', error);
@@ -333,6 +367,17 @@ function renderFrame(timestamp) {
 }
 
 controls.addEventListener('change', requestRender);
+
+renderer.domElement.addEventListener('webglcontextlost', (event) => {
+  event.preventDefault();
+  setSimulationRunning(false);
+  showVisualizationError('The graphics context was lost. Waiting for the browser to restore it…', 'context');
+});
+
+renderer.domElement.addEventListener('webglcontextrestored', () => {
+  clearVisualizationError('context');
+  requestRender();
+});
 
 document.addEventListener('visibilitychange', () => {
   previousFrameTime = null;

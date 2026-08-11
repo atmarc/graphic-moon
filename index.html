@@ -51,10 +51,50 @@
     #controls-panel {
       right: 22px;
       bottom: 22px;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
       width: min(350px, calc(100vw - 44px));
       max-height: calc(100vh - 44px);
-      padding: 17px 18px;
+      max-height: calc(100dvh - 44px);
+      overflow: hidden;
+      overscroll-behavior: contain;
+    }
+
+    #controls-panel.collapsed {
+      display: block;
+      width: auto;
+    }
+
+    .panel-toggle {
+      display: grid;
+      place-items: center;
+      width: 30px;
+      min-height: 30px;
+      margin: 8px 8px 4px auto;
+      padding: 0;
+      color: var(--cyan);
+      font-size: 16px;
+      line-height: 1;
+    }
+
+    #controls-panel.collapsed .panel-toggle { margin: 6px; }
+
+    #controls-collapse-icon {
+      width: 8px;
+      height: 8px;
+      border-right: 2px solid currentColor;
+      border-bottom: 2px solid currentColor;
+      transform: translateY(-2px) rotate(45deg);
+    }
+
+    #controls-panel.collapsed #controls-collapse-icon {
+      transform: translateY(2px) rotate(-135deg);
+    }
+
+    #controls-panel-content {
+      padding: 5px 18px 17px;
       overflow-y: auto;
+      scrollbar-gutter: stable;
     }
 
     .control-row {
@@ -121,8 +161,6 @@
       color: var(--cyan);
       background: rgba(114, 215, 255, 0.13);
     }
-
-    .tab-panel { min-height: 174px; }
 
     .section-label {
       margin: 0 0 13px;
@@ -258,9 +296,56 @@
       text-transform: uppercase;
     }
 
+    #touch-help { display: none; }
+
+    #startup-error {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      z-index: 5;
+      width: min(480px, calc(100vw - 40px));
+      padding: 18px 20px;
+      border: 1px solid rgba(255, 140, 120, 0.5);
+      border-radius: 3px;
+      color: var(--ink);
+      background: rgba(18, 7, 8, 0.94);
+      font: 12px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace;
+      text-align: center;
+      transform: translate(-50%, -50%);
+    }
+
+    body.visualization-unavailable #controls-panel,
+    body.visualization-unavailable #help { display: none; }
+
     @media (max-width: 680px) {
-      #controls-panel { right: 12px; bottom: 12px; width: calc(100vw - 24px); }
-      #help { display: none; }
+      #controls-panel {
+        right: calc(12px + env(safe-area-inset-right));
+        bottom: calc(12px + env(safe-area-inset-bottom));
+        left: calc(12px + env(safe-area-inset-left));
+        width: auto;
+        max-height: calc(100vh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+        max-height: calc(100dvh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+      }
+
+      #controls-panel.collapsed { left: auto; }
+
+      #help {
+        right: calc(80px + env(safe-area-inset-right));
+        bottom: calc(16px + env(safe-area-inset-bottom));
+        left: calc(16px + env(safe-area-inset-left));
+        font-size: 9px;
+      }
+
+      #controls-panel:not(.collapsed) ~ #help { display: none; }
+      #mouse-help { display: none; }
+      #touch-help { display: inline; }
+    }
+
+    @media (pointer: coarse) {
+      button { min-height: 44px; }
+      .panel-toggle { width: 44px; min-height: 44px; }
+      #controls-panel.collapsed .panel-toggle { margin: 5px; }
+      .tab { min-height: 44px; }
     }
   </style>
 
@@ -274,13 +359,18 @@
   </script>
 </head>
 <body>
+  <div id="startup-error" role="alert" hidden></div>
   <section id="controls-panel" class="hud" aria-label="Lunar visualization controls">
-    <nav class="tabs" role="tablist" aria-label="Visualization mode">
-      <button id="static-tab" class="tab" type="button" role="tab" aria-selected="true" aria-controls="static-panel">Static Moon</button>
-      <button id="simulation-tab" class="tab" type="button" role="tab" aria-selected="false" aria-controls="simulation-panel" tabindex="-1">Simulation</button>
-    </nav>
+    <button id="controls-collapse" class="panel-toggle" type="button" aria-expanded="true" aria-controls="controls-panel-content" aria-label="Collapse controls">
+      <span id="controls-collapse-icon" aria-hidden="true"></span>
+    </button>
+    <div id="controls-panel-content">
+      <nav class="tabs" role="tablist" aria-label="Visualization mode">
+      <button id="static-tab" class="tab" type="button" role="tab" aria-selected="false" aria-controls="static-panel" tabindex="-1">Static Moon</button>
+      <button id="simulation-tab" class="tab" type="button" role="tab" aria-selected="true" aria-controls="simulation-panel">Simulation</button>
+      </nav>
 
-    <section id="static-panel" class="tab-panel" role="tabpanel" aria-labelledby="static-tab">
+    <section id="static-panel" class="tab-panel" role="tabpanel" aria-labelledby="static-tab" hidden>
       <h2 class="section-label">Illumination explorer</h2>
       <div class="control-row">
         <label for="static-local-time">Local solar time at 0°</label>
@@ -288,10 +378,10 @@
       </div>
       <input id="static-local-time" type="range" min="0" max="24" step="0.05" value="12" disabled aria-label="Static local solar time at zero degrees longitude">
       <div class="time-labels"><span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>24:00</span></div>
-      <div id="snapshot-status" class="snapshot-status">Loading 24 Diviner snapshots…</div>
+      <div id="snapshot-status" class="snapshot-status" role="status">Loading 24 Diviner snapshots…</div>
     </section>
 
-    <section id="simulation-panel" class="tab-panel" role="tabpanel" aria-labelledby="simulation-tab" hidden>
+    <section id="simulation-panel" class="tab-panel" role="tabpanel" aria-labelledby="simulation-tab">
       <h2 class="section-label">Water migration</h2>
       <div class="control-row">
         <span>Elapsed time</span>
@@ -301,7 +391,7 @@
         <span>Current local time at 0°</span>
         <output id="simulation-local-time">00:00</output>
       </div>
-      <div id="simulation-data-status" class="snapshot-status">Loading Diviner and terrain…</div>
+      <div id="simulation-data-status" class="snapshot-status" role="status">Loading Diviner and terrain…</div>
       <div class="simulation-controls">
         <div class="control-row">
           <label for="particle-count">Particles after reset</label>
@@ -317,7 +407,7 @@
             <label for="simulation-speed">Playback speed</label>
             <output id="simulation-speed-value" for="simulation-speed">1 lunation/min</output>
           </div>
-          <input id="simulation-speed" type="range" min="0.25" max="4" step="0.25" value="1" aria-label="Lunations simulated per minute">
+          <input id="simulation-speed" type="range" min="0.25" max="10" step="0.25" value="1" aria-label="Lunations simulated per minute">
         </div>
         <div class="simulation-status" aria-live="polite">
           <span>Adsorbed <strong id="adsorbed-count">10</strong></span>
@@ -343,9 +433,13 @@
         <button id="reset-view" type="button">Reset camera</button>
       </div>
     </div>
+    </div>
   </section>
 
-  <div id="help">Drag: orbit camera · wheel: zoom · right-drag: pan</div>
-  <script type="module" src="./main.js"></script>
+  <div id="help">
+    <span id="mouse-help">Drag: orbit camera · wheel: zoom · right-drag: pan</span>
+    <span id="touch-help">One finger: orbit · two fingers: zoom and pan</span>
+  </div>
+  <script type="module" src="./bootstrap.js"></script>
 </body>
 </html>
