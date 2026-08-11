@@ -1,0 +1,167 @@
+{
+  "title": "Diviner instantaneous bolometric temperature snapshots",
+  "source": "https://luna1.diviner.ucla.edu/~jpierre/diviner/level4_raster_data/",
+  "citation": "Williams et al. (2017), Icarus 283, 300-325",
+  "width": 720,
+  "height": 360,
+  "longitudeCenters": [
+    -179.75,
+    179.75
+  ],
+  "latitudeCenters": [
+    -89.75,
+    89.75
+  ],
+  "snapshotIntervalDegrees": 15,
+  "encoding": "unsigned 16-bit little-endian centikelvin",
+  "kelvinScale": 100,
+  "missingValue": 65535,
+  "minimumKelvin": 24.1132368,
+  "maximumKelvin": 405.232053,
+  "snapshots": [
+    {
+      "subsolarLongitude": 0,
+      "fileName": "diviner_tbol_snapshot_000E.xyz",
+      "minimumKelvin": 32.3252254,
+      "maximumKelvin": 394.91656
+    },
+    {
+      "subsolarLongitude": 15,
+      "fileName": "diviner_tbol_snapshot_015E.xyz",
+      "minimumKelvin": 32.3212073,
+      "maximumKelvin": 396.205305
+    },
+    {
+      "subsolarLongitude": 30,
+      "fileName": "diviner_tbol_snapshot_030E.xyz",
+      "minimumKelvin": 31.9894574,
+      "maximumKelvin": 395.934242
+    },
+    {
+      "subsolarLongitude": 45,
+      "fileName": "diviner_tbol_snapshot_045E.xyz",
+      "minimumKelvin": 28.886974,
+      "maximumKelvin": 403.170186
+    },
+    {
+      "subsolarLongitude": 60,
+      "fileName": "diviner_tbol_snapshot_060E.xyz",
+      "minimumKelvin": 28.7836093,
+      "maximumKelvin": 405.232053
+    },
+    {
+      "subsolarLongitude": 75,
+      "fileName": "diviner_tbol_snapshot_075E.xyz",
+      "minimumKelvin": 26.8098606,
+      "maximumKelvin": 399.249328
+    },
+    {
+      "subsolarLongitude": 90,
+      "fileName": "diviner_tbol_snapshot_090E.xyz",
+      "minimumKelvin": 24.1132368,
+      "maximumKelvin": 396.185584
+    },
+    {
+      "subsolarLongitude": 105,
+      "fileName": "diviner_tbol_snapshot_105E.xyz",
+      "minimumKelvin": 29.9011812,
+      "maximumKelvin": 393.973175
+    },
+    {
+      "subsolarLongitude": 120,
+      "fileName": "diviner_tbol_snapshot_120E.xyz",
+      "minimumKelvin": 30.0915473,
+      "maximumKelvin": 395.80146
+    },
+    {
+      "subsolarLongitude": 135,
+      "fileName": "diviner_tbol_snapshot_135E.xyz",
+      "minimumKelvin": 28.4247803,
+      "maximumKelvin": 394.031051
+    },
+    {
+      "subsolarLongitude": 150,
+      "fileName": "diviner_tbol_snapshot_150E.xyz",
+      "minimumKelvin": 30.1901651,
+      "maximumKelvin": 394.18137
+    },
+    {
+      "subsolarLongitude": 165,
+      "fileName": "diviner_tbol_snapshot_165E.xyz",
+      "minimumKelvin": 28.8735508,
+      "maximumKelvin": 399.94017
+    },
+    {
+      "subsolarLongitude": 180,
+      "fileName": "diviner_tbol_snapshot_180E.xyz",
+      "minimumKelvin": 30.8002427,
+      "maximumKelvin": 398.742862
+    },
+    {
+      "subsolarLongitude": 195,
+      "fileName": "diviner_tbol_snapshot_195E.xyz",
+      "minimumKelvin": 31.3517219,
+      "maximumKelvin": 393.387625
+    },
+    {
+      "subsolarLongitude": 210,
+      "fileName": "diviner_tbol_snapshot_210E.xyz",
+      "minimumKelvin": 30.6565989,
+      "maximumKelvin": 401.447613
+    },
+    {
+      "subsolarLongitude": 225,
+      "fileName": "diviner_tbol_snapshot_225E.xyz",
+      "minimumKelvin": 30.5670453,
+      "maximumKelvin": 398.428308
+    },
+    {
+      "subsolarLongitude": 240,
+      "fileName": "diviner_tbol_snapshot_240E.xyz",
+      "minimumKelvin": 32.4728972,
+      "maximumKelvin": 401.524068
+    },
+    {
+      "subsolarLongitude": 255,
+      "fileName": "diviner_tbol_snapshot_255E.xyz",
+      "minimumKelvin": 34.7772077,
+      "maximumKelvin": 394.577393
+    },
+    {
+      "subsolarLongitude": 270,
+      "fileName": "diviner_tbol_snapshot_270E.xyz",
+      "minimumKelvin": 32.4383055,
+      "maximumKelvin": 401.437454
+    },
+    {
+      "subsolarLongitude": 285,
+      "fileName": "diviner_tbol_snapshot_285E.xyz",
+      "minimumKelvin": 33.0376328,
+      "maximumKelvin": 395.992247
+    },
+    {
+      "subsolarLongitude": 300,
+      "fileName": "diviner_tbol_snapshot_300E.xyz",
+      "minimumKelvin": 34.1156107,
+      "maximumKelvin": 396.959277
+    },
+    {
+      "subsolarLongitude": 315,
+      "fileName": "diviner_tbol_snapshot_315E.xyz",
+      "minimumKelvin": 36.3365857,
+      "maximumKelvin": 396.047894
+    },
+    {
+      "subsolarLongitude": 330,
+      "fileName": "diviner_tbol_snapshot_330E.xyz",
+      "minimumKelvin": 34.32296,
+      "maximumKelvin": 397.016884
+    },
+    {
+      "subsolarLongitude": 345,
+      "fileName": "diviner_tbol_snapshot_345E.xyz",
+      "minimumKelvin": 30.6075988,
+      "maximumKelvin": 395.870239
+    }
+  ]
+}
