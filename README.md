@@ -2,29 +2,21 @@
 
 An interactive Three.js visualization of lunar illumination, Diviner surface temperatures, and thermally driven water migration. Water molecules adsorb to the terrain, desorb probabilistically, follow ballistic trajectories under lunar gravity, and adsorb again when they land.
 
+[View the live simulation](https://atmarc.github.io/graphic-moon/).
+
 ![Lunar water particle simulation](./screenshot.png)
 
-## Physical Model
+## Data sources
 
 - Surface temperatures are spatially and temporally interpolated from [Diviner snapshots](https://luna1.diviner.ucla.edu/~jpierre/diviner/level4_raster_data/).
-- Desorption uses the rate and timestep survival probability as in Peschel et al. (2026).
-- Adsorption energies follow the Schorghofer (2023) exponential fit with `E_p = 0.65 eV`, `W = 0.22 eV`, and a normalized upper truncation at `1.55 eV`.
+- The surface color map is derived from the LRO Camera Wide Angle Camera mosaic distributed in NASA's [CGI Moon Kit](https://svs.gsfc.nasa.gov/4720/).
+- Terrain elevation is derived from the Lunar Orbiter Laser Altimeter gridded DEM distributed in NASA's [CGI Moon Kit](https://svs.gsfc.nasa.gov/4720/).
+## Physical Model
+- Desorption uses the rate and timestep survival probability as in [Peschel et al. (2026)](https://iopscience.iop.org/article/10.3847/PSJ/ae4901/meta).
+- Adsorption energies follow the [Schörghofer (2023)](https://doi.org/10.3847/PSJ/acf19b) exponential fit with `E_p = 0.65 eV`, `W = 0.22 eV`, and a normalized upper truncation at `1.55 eV`.
 - Launch velocities follow the Maxwell-Boltzmann flux distribution and are rotated by the local terrain normal.
 - Flights use a two-second velocity-Verlet integration under three-dimensional central lunar gravity.
 
-## Run Locally
-
-Serve the repository over HTTP, then open the displayed URL:
-
-```bash
-python3 -m http.server 8000
-```
-
-Run the physics tests with:
-
-```bash
-npm test
-```
 
 ## Project Structure
 
