@@ -52,7 +52,9 @@
       right: 22px;
       bottom: 22px;
       width: min(350px, calc(100vw - 44px));
+      max-height: calc(100vh - 44px);
       padding: 17px 18px;
+      overflow-y: auto;
     }
 
     .control-row {
@@ -77,7 +79,58 @@
       accent-color: var(--cyan);
     }
 
+    input[type="number"] {
+      width: 82px;
+      min-height: 32px;
+      padding: 5px 8px;
+      border: 1px solid var(--line);
+      border-radius: 2px;
+      color: var(--ink);
+      background: rgba(0, 0, 0, 0.24);
+      font: 700 12px ui-monospace, SFMono-Regular, Menlo, monospace;
+      text-align: right;
+    }
+
+    input[type="number"]:focus-visible {
+      border-color: rgba(114, 215, 255, 0.62);
+      outline: none;
+    }
+
     input[type="range"]:disabled { opacity: 0.45; }
+
+    [hidden] { display: none !important; }
+
+    .tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px;
+      margin-bottom: 16px;
+      padding: 3px;
+      border: 1px solid var(--line);
+      background: rgba(0, 0, 0, 0.2);
+    }
+
+    .tab {
+      min-height: 32px;
+      border-color: transparent;
+      background: transparent;
+    }
+
+    .tab[aria-selected="true"] {
+      border-color: rgba(114, 215, 255, 0.45);
+      color: var(--cyan);
+      background: rgba(114, 215, 255, 0.13);
+    }
+
+    .tab-panel { min-height: 174px; }
+
+    .section-label {
+      margin: 0 0 13px;
+      color: var(--cyan);
+      font: 700 10px ui-monospace, SFMono-Regular, Menlo, monospace;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
 
     .time-labels {
       display: flex;
@@ -136,6 +189,31 @@
 
     .button-row { display: flex; gap: 8px; margin-top: 12px; }
 
+    .simulation-controls {
+      margin-top: 4px;
+    }
+
+    .simulation-status {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 5px 12px;
+      margin-top: 10px;
+      color: rgba(225, 239, 249, 0.78);
+      font: 9px ui-monospace, SFMono-Regular, Menlo, monospace;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .simulation-status strong { color: var(--cyan); font-weight: 700; }
+
+    .speed-control { margin-top: 11px; }
+
+    .display-controls {
+      margin-top: 14px;
+      padding-top: 13px;
+      border-top: 1px solid var(--line);
+    }
+
     button {
       min-height: 34px;
       padding: 8px 10px;
@@ -149,7 +227,8 @@
       cursor: pointer;
     }
 
-    #temperature-layer, #reset-view { flex: 1; }
+    #temperature-layer, #reset-view, #simulation-toggle, #simulation-reset,
+    #trace-toggle, #trace-clear { flex: 1; }
 
     button:hover, button:focus-visible {
       border-color: rgba(114, 215, 255, 0.62);
@@ -195,24 +274,74 @@
   </script>
 </head>
 <body>
-  <section id="controls-panel" class="hud" aria-label="Thermal visualization controls">
-    <div class="control-row">
-      <label for="local-time">Local solar time at 0°</label>
-      <output id="local-time-value" for="local-time">12:00</output>
-    </div>
-    <input id="local-time" type="range" min="0" max="24" step="0.05" value="12" disabled aria-label="Local solar time at zero degrees longitude">
-    <div class="time-labels"><span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>24:00</span></div>
-    <div id="snapshot-status" class="snapshot-status">Loading 24 Diviner snapshots…</div>
+  <section id="controls-panel" class="hud" aria-label="Lunar visualization controls">
+    <nav class="tabs" role="tablist" aria-label="Visualization mode">
+      <button id="static-tab" class="tab" type="button" role="tab" aria-selected="true" aria-controls="static-panel">Static Moon</button>
+      <button id="simulation-tab" class="tab" type="button" role="tab" aria-selected="false" aria-controls="simulation-panel" tabindex="-1">Simulation</button>
+    </nav>
 
-    <div class="legend inactive" role="img" aria-label="Temperature color legend">
-      <div class="legend-title"><span>Surface temperature</span><span>Kelvin</span></div>
-      <div class="legend-gradient"></div>
-      <div class="legend-values"><span id="legend-min">24 K</span><span>215 K</span><span id="legend-max">405 K</span></div>
-    </div>
+    <section id="static-panel" class="tab-panel" role="tabpanel" aria-labelledby="static-tab">
+      <h2 class="section-label">Illumination explorer</h2>
+      <div class="control-row">
+        <label for="static-local-time">Local solar time at 0°</label>
+        <output id="static-local-time-value" for="static-local-time">12:00</output>
+      </div>
+      <input id="static-local-time" type="range" min="0" max="24" step="0.05" value="12" disabled aria-label="Static local solar time at zero degrees longitude">
+      <div class="time-labels"><span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>24:00</span></div>
+      <div id="snapshot-status" class="snapshot-status">Loading 24 Diviner snapshots…</div>
+    </section>
 
-    <div class="button-row">
-      <button id="temperature-layer" type="button" aria-pressed="false">Show temperature</button>
-      <button id="reset-view" type="button">Reset camera</button>
+    <section id="simulation-panel" class="tab-panel" role="tabpanel" aria-labelledby="simulation-tab" hidden>
+      <h2 class="section-label">Water migration</h2>
+      <div class="control-row">
+        <span>Elapsed time</span>
+        <output id="elapsed-lunations">0.000 lunations</output>
+      </div>
+      <div class="control-row">
+        <span>Current local time at 0°</span>
+        <output id="simulation-local-time">00:00</output>
+      </div>
+      <div id="simulation-data-status" class="snapshot-status">Loading Diviner and terrain…</div>
+      <div class="simulation-controls">
+        <div class="control-row">
+          <label for="particle-count">Particles after reset</label>
+          <input id="particle-count" type="number" min="1" max="100000" step="1" value="10" inputmode="numeric" aria-describedby="particle-count-note">
+        </div>
+        <div id="particle-count-note" class="snapshot-status">Changes apply when Reset is pressed</div>
+        <div class="button-row">
+          <button id="simulation-toggle" type="button" disabled aria-pressed="false">Loading terrain</button>
+          <button id="simulation-reset" type="button" disabled>Reset</button>
+        </div>
+        <div class="speed-control">
+          <div class="control-row">
+            <label for="simulation-speed">Playback speed</label>
+            <output id="simulation-speed-value" for="simulation-speed">1 lunation/min</output>
+          </div>
+          <input id="simulation-speed" type="range" min="0.25" max="4" step="0.25" value="1" aria-label="Lunations simulated per minute">
+        </div>
+        <div class="simulation-status" aria-live="polite">
+          <span>Adsorbed <strong id="adsorbed-count">10</strong></span>
+          <span>In flight <strong id="flight-count">0</strong></span>
+          <span>Escaped <strong id="escaped-count">0</strong></span>
+          <span>Landings <strong id="hop-count">0</strong></span>
+        </div>
+        <div class="button-row">
+          <button id="trace-toggle" type="button" class="active" aria-pressed="true" disabled>Hide paths</button>
+          <button id="trace-clear" type="button" disabled>Clear paths</button>
+        </div>
+      </div>
+    </section>
+
+    <div class="display-controls">
+      <div class="legend inactive" role="img" aria-label="Temperature color legend">
+        <div class="legend-title"><span>Surface temperature</span><span>Kelvin</span></div>
+        <div class="legend-gradient"></div>
+        <div class="legend-values"><span id="legend-min">24 K</span><span>215 K</span><span id="legend-max">405 K</span></div>
+      </div>
+      <div class="button-row">
+        <button id="temperature-layer" type="button" aria-pressed="false">Show temperature</button>
+        <button id="reset-view" type="button">Reset camera</button>
+      </div>
     </div>
   </section>
 

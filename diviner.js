@@ -3,6 +3,24 @@ import * as THREE from 'three';
 const SNAPSHOT_COUNT = 24;
 const SOURCE_KELVIN_SCALE = 100;
 
+function modulo(value, divisor) {
+  return ((value % divisor) + divisor) % divisor;
+}
+
+function temperaturePhase(hours) {
+  const localTimeHours = modulo(Number(hours), 24);
+  const subsolarLongitude = modulo((12 - localTimeHours) * 15, 360);
+  const exactIndex = subsolarLongitude / 15;
+  const indexA = Math.floor(exactIndex) % SNAPSHOT_COUNT;
+  return {
+    localTimeHours,
+    subsolarLongitude,
+    indexA,
+    indexB: (indexA + 1) % SNAPSHOT_COUNT,
+    mixAmount: exactIndex - Math.floor(exactIndex)
+  };
+}
+
 function createPlaceholderTexture() {
   const texture = new THREE.DataTexture(
     new Uint8Array([0]),
@@ -73,12 +91,9 @@ export function createDivinerController() {
   }
 
   function setLocalTime(hours) {
-    localTimeHours = ((Number(hours) % 24) + 24) % 24;
-    const subsolarLongitude = ((12 - localTimeHours) * 15 % 360 + 360) % 360;
-    const exactIndex = subsolarLongitude / 15;
-    const indexA = Math.floor(exactIndex) % SNAPSHOT_COUNT;
-    const indexB = (indexA + 1) % SNAPSHOT_COUNT;
-    const mixAmount = exactIndex - Math.floor(exactIndex);
+    const phase = temperaturePhase(hours);
+    localTimeHours = phase.localTimeHours;
+    const { subsolarLongitude, indexA, indexB, mixAmount } = phase;
 
     if (textureA && indexA !== currentIndexA) {
       updateTexture(textureA, indexA);
@@ -99,6 +114,44 @@ export function createDivinerController() {
       snapshotA: metadata?.snapshots[indexA] ?? null,
       snapshotB: metadata?.snapshots[indexB] ?? null
     };
+  }
+
+  function sampleSnapshotKelvin(index, longitudeRadians, latitudeRadians) {
+    if (!metadata || !packedTemperatures) throw new Error('Diviner data has not loaded yet.');
+    const width = metadata.width;
+    const height = metadata.height;
+    const x = modulo(longitudeRadians / (2 * Math.PI) + 0.5, 1) * width - 0.5;
+    const y = THREE.MathUtils.clamp(latitudeRadians / Math.PI + 0.5, 0, 1) * height - 0.5;
+    const x0 = Math.floor(x);
+    const y0 = Math.floor(y);
+    const tx = x - x0;
+    const ty = y - y0;
+    const cellCount = width * height;
+    const offset = index * cellCount;
+    const samples = [
+      [modulo(x0, width), THREE.MathUtils.clamp(y0, 0, height - 1), (1 - tx) * (1 - ty)],
+      [modulo(x0 + 1, width), THREE.MathUtils.clamp(y0, 0, height - 1), tx * (1 - ty)],
+      [modulo(x0, width), THREE.MathUtils.clamp(y0 + 1, 0, height - 1), (1 - tx) * ty],
+      [modulo(x0 + 1, width), THREE.MathUtils.clamp(y0 + 1, 0, height - 1), tx * ty]
+    ];
+    let weightedTemperature = 0;
+    let validWeight = 0;
+    for (const [sampleX, sampleY, weight] of samples) {
+      const encoded = packedTemperatures[offset + sampleY * width + sampleX];
+      if (encoded === metadata.missingValue) continue;
+      weightedTemperature += encoded / metadata.kelvinScale * weight;
+      validWeight += weight;
+    }
+    return validWeight > 0 ? weightedTemperature / validWeight : Number.NaN;
+  }
+
+  function sampleTemperatureKelvin(longitudeRadians, latitudeRadians, hours = localTimeHours) {
+    const { indexA, indexB, mixAmount } = temperaturePhase(hours);
+    const temperatureA = sampleSnapshotKelvin(indexA, longitudeRadians, latitudeRadians);
+    const temperatureB = sampleSnapshotKelvin(indexB, longitudeRadians, latitudeRadians);
+    if (!Number.isFinite(temperatureA)) return temperatureB;
+    if (!Number.isFinite(temperatureB)) return temperatureA;
+    return THREE.MathUtils.lerp(temperatureA, temperatureB, mixAmount);
   }
 
   async function load() {
@@ -139,7 +192,7 @@ export function createDivinerController() {
     return Boolean(visible);
   }
 
-  return { uniforms, load, setLocalTime, setTemperatureVisible };
+  return { uniforms, load, setLocalTime, setTemperatureVisible, sampleTemperatureKelvin };
 }
 
 export function formatLocalTime(hours) {

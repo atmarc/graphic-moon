@@ -4,7 +4,7 @@ import { buildTriangularPatch, createIcosahedronFaceAttributes } from './icosphe
 export const MOON_MASS_KG = 7.342e22;
 export const MOON_RADIUS_METERS = 1_737_400;
 
-const MOON_RENDER_RADIUS = 2.6;
+export const MOON_RENDER_RADIUS = 2.6;
 const MOON_AXIAL_TILT = THREE.MathUtils.degToRad(1.543);
 const ELEVATION_MIN_WORLD = -10_000 * MOON_RENDER_RADIUS / MOON_RADIUS_METERS;
 const ELEVATION_RANGE_WORLD = 20_000 * MOON_RENDER_RADIUS / MOON_RADIUS_METERS;
