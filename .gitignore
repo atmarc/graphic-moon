@@ -1,0 +1,7 @@
+test-results/
+playwright-report/
+
+# Local source assets that are unused or exceed common Git hosting limits.
+assets/Moon_NASA_LRO_8k_Topo.glb
+assets/lroc_color_2k.jpg
+assets/ldem_3_8bit.jpg
